@@ -1,0 +1,29 @@
+    .no $0180
+
+;   CLEAR_PAGE: 326 instructions = 652 cycles
+;   parameter: D: page to clear
+
+; PC_MAIN 		.eq	$3
+; R_CUR_PAGE	.eq	$6
+
+R_TITLE_BM_PTR  .eq $E
+R_TITLE_SCR_PTR  .eq $F
+
+DO_TITLE
+    LDI /TITLE_BITMAP
+    PHI R_TITLE_BM_PTR
+    GHI R_CUR_PAGE
+    PHI R_TITLE_SCR_PTR
+    LDI $FF
+    PLO R_TITLE_BM_PTR
+    PLO R_TITLE_SCR_PTR
+    SEX R_TITLE_SCR_PTR
+TITLE_LOOP
+    LDN R_TITLE_BM_PTR
+    DEC R_TITLE_BM_PTR
+    STXD
+    GLO R_TITLE_BM_PTR
+    XRI $FF
+    BNZ TITLE_LOOP
+
+    SEP PC_MAIN 

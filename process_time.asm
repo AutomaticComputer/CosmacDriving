@@ -1,0 +1,184 @@
+	.no $0400
+
+; STACK			    .eq $2
+; PC_MAIN 		    .eq	$3
+; PC_SUB			.eq	$4
+; PC_SUBSUB 		.eq $5
+; R_CUR_PAGE		.eq	$6
+; R_FR_CNT		    .eq $7
+; R_VAR_PTR         .eq $8    ; higher = $0D
+; R_WORK_PTR        .eq $9    ; higher = $0D
+; R_TABLE_PTR       .eq $A
+
+R_PRINT_DIGIT_TMP   .eq $E  (lower byte)
+R_PRINT_DRAW_PTR    .eq $F
+
+PROCESS_TIME
+    LDI #V_LAST_FRAME
+    PLO R_VAR_PTR
+    SEX R_VAR_PTR
+    GLO R_FR_CNT
+    SM
+    INC R_VAR_PTR   ; V_ELAPSED should follow
+    STR R_VAR_PTR
+    DEC R_VAR_PTR
+    ADD
+    STR R_VAR_PTR
+
+; add to V_TIME_*
+    INC R_VAR_PTR   ; should be V_ELAPSED     
+    LDI #V_TIME_FRAC
+    PLO R_WORK_PTR
+    SEX R_WORK_PTR
+    LDN R_VAR_PTR
+    ADD
+    STR R_WORK_PTR
+    SMI $06
+    BNF MAIN_TIME_SKIP
+    STR R_WORK_PTR
+    DEC R_WORK_PTR
+    LDI $01
+    ADD
+    STR R_WORK_PTR
+    SMI $0A
+    BNF MAIN_TIME_SKIP
+    STR R_WORK_PTR
+    DEC R_WORK_PTR
+    LDI $01
+    ADD
+    STR R_WORK_PTR
+    SMI $0A
+    BNF MAIN_TIME_SKIP
+    STR R_WORK_PTR
+    DEC R_WORK_PTR
+    LDI $01
+    ADD
+    STR R_WORK_PTR
+    SMI $0A
+    BNF MAIN_TIME_SKIP
+    STR R_WORK_PTR
+    DEC R_WORK_PTR
+    LDI $01
+    ADD
+    STR R_WORK_PTR
+    SMI $0A
+    BNF MAIN_TIME_SKIP
+    LDI #V_STATE
+    PLO R_WORK_PTR
+    LDI STATE_END
+    STR R_WORK_PTR
+
+MAIN_TIME_SKIP
+    LDI $2F
+    PLO R_CUR_PAGE
+    LDI #V_ELAPSED
+    PLO R_VAR_PTR
+    LDN R_VAR_PTR
+    STR R_CUR_PAGE
+
+    SEP PC_MAIN
+
+PRINT_TIME
+    LDI #V_TIME_3
+    PLO R_VAR_PTR
+    GHI PC_SUB
+    PHI PC_SUBSUB
+    PHI R_TABLE_PTR
+    LDI #PRINT_DIGIT_LOW_ENTRY
+    PLO PC_SUBSUB
+    GHI R_CUR_PAGE
+    PHI R_PRINT_DRAW_PTR
+    LDI $2D         ; position to print
+    PLO R_PRINT_DRAW_PTR
+    SEP PC_SUBSUB
+    INC R_VAR_PTR
+    SEP PC_SUBSUB
+    INC R_VAR_PTR
+    SEP PC_SUBSUB
+    GLO R_PRINT_DRAW_PTR
+    ADI $20
+    PLO R_PRINT_DRAW_PTR
+    LDI $40
+    STR R_PRINT_DRAW_PTR
+    GLO R_PRINT_DRAW_PTR
+    SMI $20
+    PLO R_PRINT_DRAW_PTR
+    INC R_VAR_PTR
+    LDI #PRINT_DIGIT_LOW_ENTRY
+    PLO PC_SUBSUB
+    SEP PC_SUBSUB
+    SEP PC_MAIN
+
+
+; sub subroutine
+PRINT_DIGIT_HIGH_FINAL
+    GLO R_PRINT_DRAW_PTR
+    SMI $28
+    PLO R_PRINT_DRAW_PTR
+    SEP PC_SUB
+PRINT_DIGIT_LOW_ENTRY
+    SEX R_VAR_PTR
+    LDN R_VAR_PTR
+    SHL
+    SHL
+    ADD
+    ADI #DIGIT_BITMAP
+    PLO R_TABLE_PTR
+    SEX R_PRINT_DRAW_PTR
+    LDI $05
+    PLO R_PRINT_DIGIT_TMP
+PRINT_DIGIT_LOW_LOOP
+    LDN R_TABLE_PTR
+    ANI $0F
+    OR
+    STR R_PRINT_DRAW_PTR
+    INC R_TABLE_PTR
+    GLO R_PRINT_DRAW_PTR
+    ADI $08
+    PLO R_PRINT_DRAW_PTR
+    DEC R_PRINT_DIGIT_TMP
+    GLO R_PRINT_DIGIT_TMP
+    BNZ PRINT_DIGIT_LOW_LOOP
+PRINT_DIGIT_LOW_FINAL
+    GLO R_PRINT_DRAW_PTR
+    SMI $27
+    PLO R_PRINT_DRAW_PTR
+    SEP PC_SUB
+PRINT_DIGIT_HIGH_ENTRY
+    SEX R_VAR_PTR
+    LDN R_VAR_PTR
+    SHL
+    SHL
+    ADD
+    ADI #DIGIT_BITMAP
+    PLO R_TABLE_PTR
+    LDI $05
+    PLO R_PRINT_DIGIT_TMP
+PRINT_DIGIT_HIGH_LOOP
+    LDN R_TABLE_PTR
+    ANI $F0
+    STR R_PRINT_DRAW_PTR
+    INC R_TABLE_PTR
+    GLO R_PRINT_DRAW_PTR
+    ADI $08
+    PLO R_PRINT_DRAW_PTR
+    DEC R_PRINT_DIGIT_TMP
+    GLO R_PRINT_DIGIT_TMP
+    BNZ PRINT_DIGIT_HIGH_LOOP
+    BR PRINT_DIGIT_HIGH_FINAL
+
+
+
+
+DIGIT_BITMAP
+    .db $EE, $AA, $AA, $AA, $EE
+    .db $44, $44, $44, $44, $44
+    .db $EE, $22, $EE, $88, $EE
+    .db $EE, $22, $EE, $22, $EE
+    .db $AA, $AA, $AA, $EE, $22
+    .db $EE, $88, $EE, $22, $EE
+    .db $EE, $88, $EE, $AA, $EE
+    .db $EE, $22, $22, $22, $22
+    .db $EE, $AA, $EE, $AA, $EE
+    .db $EE, $AA, $EE, $22, $EE
+
