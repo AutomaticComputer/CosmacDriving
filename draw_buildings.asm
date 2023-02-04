@@ -1,4 +1,4 @@
-	.no $0300
+	.no $0380
 ; STACK			.eq $2
 ; PC_MAIN 		.eq	$3
 ; R_CUR_PAGE	.eq	$6

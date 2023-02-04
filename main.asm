@@ -11,10 +11,10 @@
 MAIN
 
 ; set up interrupt handler, stack and R_VAR_PTR.1, R_WORK_PTR.1
-    LDI $00
+    LDI /INT0_ENTRY
     PHI PC_INT
-    LDI #INT_ENTRY
-    PLO PC_INT      ; PC_INT = INT_ENTRY
+    LDI #INT0_ENTRY
+    PLO PC_INT      ; PC_INT = INT0_ENTRY
     LDI /STACK_INITIAL
     PHI STACK
     LDI #STACK_INITIAL
@@ -52,6 +52,25 @@ MAIN
     PLO PC_SUB
     LDI WORK_PAGE
     SEP PC_SUB   
+
+; clear screen
+    LDI VIDEO_PAGE0
+    SEP PC_SUB   
+
+    .do FLAG_COLOR<>0
+; set color
+    DEC STACK
+    OUT 5
+    LDI /SET_COLOR_ENTRY
+    PHI PC_SUB
+    LDI #SET_COLOR_ENTRY
+    PLO PC_SUB
+    SEP PC_SUB   
+
+; set address of interrupt routine(color)
+    LDI #INT_ENTRY
+    PLO PC_INT      ; PC_INT = INT_ENTRY
+    .fi
 
 ; main game loop
 MAIN_LOOP

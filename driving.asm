@@ -12,7 +12,44 @@
 ; roughly, CURV_DELTA_DIST = CURVATURE_SCALED * (differences of Y_TO_DIST)
 
 	.cr 1802
-	.tf driving.bin,bin
+
+TARGET_VIP		.eq 0
+TARGET_ELF		.eq 1
+
+; TARGET			.eq TARGET_VIP
+TARGET			.eq TARGET_ELF
+
+	.do TARGET=TARGET_VIP
+FLAG_4KB		.eq 0
+; FLAG_4KB		.eq 1		; only for VIP
+FLAG_COLOR		.eq 0
+; FLAG_COLOR		.eq 1		; only for VIP
+	.el
+FLAG_4KB		.eq 0
+FLAG_COLOR		.eq 0
+	.fi
+
+	.do TARGET=TARGET_VIP
+	.do FLAG_COLOR=0
+	.do FLAG_4KB=1
+	.tf driving_vip_4kb.bin,bin
+	.el
+	.tf driving_vip.bin,bin
+	.fi
+	.el	; with color
+
+	.do FLAG_4KB=1
+	.tf driving_vip_color_4kb.bin,bin
+	.el
+	.tf driving_vip_color.bin,bin
+	.fi
+	.fi
+	.fi
+
+	.do TARGET=TARGET_ELF
+	.tf driving_elf.bin,bin
+	.fi
+
 
 R_DMA			.eq $0
 PC_INT			.eq $1
@@ -35,6 +72,8 @@ VIDEO_PAGE1		.eq $0F
 STACK_INITIAL	.eq $0DFF
 LINE_DATA		.eq $0D00	; ... but hardcoded in set_line_data.asm and draw_road.asm
 CENTER_DATA 	.eq $0D10	; whether center line(dot) is to be drawn
+
+COLOR_PAGE		.eq $D0
 
 V_X_CAR		  	.eq $40		; 2 byte 
 V_DIR_REL	  	.eq $42		; 2 byte 
@@ -72,7 +111,7 @@ V_WORK_1    	.eq $72
 
 	.in startup.asm
 	.in main.asm
-	.in interrupt.asm
+
 	.in clear_page.asm
 	.in keys.asm
 	.in title.asm
@@ -87,6 +126,15 @@ V_WORK_1    	.eq $72
 	.in sound.asm
 	.in set_line_data.asm
 	.in title_bitmap.asm
+	.in interrupt.asm
 
-;	.no $0FFF				; for building 4KB bin file
-;	.db $00
+	.do FLAG_COLOR=1
+	.in color.asm
+	.fi
+
+	.do TARGET=TARGET_VIP
+	.do FLAG_4KB=1
+	.no $0FFF				; for building 4KB bin file
+	.db $00
+	.fi
+	.fi

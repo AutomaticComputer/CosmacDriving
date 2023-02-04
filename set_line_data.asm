@@ -160,6 +160,7 @@ SET_LINE_DATA_SET_S
     STR R_VAR_PTR
     STR R_CNT_Y
 ; center_data
+    ; if it is in the new segment, store $01
     GLO R_CNT_Y
     SMI $0F
     BZ SET_LINE_DATA_CENTER_FINAL
@@ -171,7 +172,13 @@ SET_LINE_DATA_SET_S
     GHI R_SEGS
     STR STACK
     GLO R_SEGS
-    SD
+    SM
+    STR R_CENTER_DATA_PTR
+    BZ SET_LINE_DATA_CENTER_FINAL
+    ; if the new seg is 0, store $FF
+    GLO R_SEGS
+    BNZ SET_LINE_DATA_CENTER_FINAL
+    LDI $FF
     STR R_CENTER_DATA_PTR
 SET_LINE_DATA_CENTER_FINAL
     GLO R_SEGS
@@ -210,21 +217,21 @@ CURV_DELTA_DIST       ; this has to match CURVATURE_SCALED
 	.no $0900
 CURVATURE_MAP       ; list of curvature: curvature_list[l] if l < 8, 
                     ; -curvature_list[l-8] if l >= 8
-    .db 4, 4, 4, 4, 4, 4, 4, 4 
-    .db 4, 0, 0, 0, 0, 0, 0, 0 
+    .db 0, 0, 0, 1, 2, 3, 3, 2 
+    .db 1, 0, 0, 0, 0, 0, 0, 0 
     .db 0, 0, 0, 0, 0, 0, 0, 0
     .db 1, 1, 1, 1, 1, 1, 1, 1
     .db 1, 1, 1, 1, 1, 1, 1, 1
     .db 1, 1, 1, 1, 9, 9, 9, 9
     .db 10, 10, 10, 10, 10, 10, 0, 0
-    .db 0, 0, 0, 3, 3, 3, 3, 3
+    .db 0, 0, 0, 2, 2, 2, 2, 2
     .db 3, 3, 3, 3, 3, 3, 3, 3
-    .db 3, 3, 3, 3, 3, 3, 0, 0
-    .db 0, 0, 0, 4, 4, 4, 4, 4
-    .db 4, 4, 4, 4, 4, 4, 4, 4
-    .db 4, 0, 0, 0, 0, 0, 0, 0
-    .db 0, 10, 10, 10, 12, 12, 12, 12
-    .db 12, 12, 0, 0, 0, 0, 0, 0
+    .db 3, 3, 2, 2, 2, 2, 0, 0
+    .db 0, 0, 0, 2, 2, 3, 3, 3
+    .db 4, 4, 4, 4, 4, 4, 3, 3
+    .db 3, 0, 0, 0, 0, 0, 0, 0
+    .db 0, 10, 10, 10, 11, 11, 12, 12
+    .db 12, 11, 0, 0, 0, 0, 0, 0
     .db 0, 0, 0, 0, 0, 0, 0, 0
     .db 2, 2, 2, 2, 2, 2, 2, 2
     .db 2, 2, 2, 2, 2, 2, 2, 2

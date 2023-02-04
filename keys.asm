@@ -1,13 +1,27 @@
-    .no $0130
+    .no $0120
 
 ; STACK             .eq $2
 ; PC_MAIN           .eq	$3
 ; R_VAR_PTR       .eq $8      ; Upper byte = $0D 
 ; R_WORK_PTR      .eq $9      ; Upper byte = $0D
 
+R_KEYS_TMP_PTR          .eq $F
 
+    .do TARGET=TARGET_VIP
+KEY_PORT    .eq 2
+    .fi
+    .do TARGET=TARGET_ELF
+KEY_PORT    .eq 4
+    .fi
+
+    ; VIP
     ; 3: left, C: right
     ; 0: up(accel), A: down(brake)
+
+    ; ELF
+    ; 0, 1, 2, 4, 6, 8, 9, A: left and brake, etc
+    ; "EF Hex Key" needed.
+
     ; variables V_KEY_LEFT, V_KEY_RIGHT, V_KEY_DOWN, V_KEY_UP must be in this order.
 GET_KEYS
     LDI #V_KEY_LEFT+3
@@ -18,11 +32,13 @@ GET_KEYS
     STXD
     STXD
     STR R_VAR_PTR
+ 
+    .do TARGET=TARGET_VIP
     SEX STACK
     DEC STACK
     LDI $03
     STR STACK
-    OUT 2
+    OUT KEY_PORT
     BN3 GET_KEYS_SKIP_LEFT
     STR R_VAR_PTR
 GET_KEYS_SKIP_LEFT
@@ -30,7 +46,7 @@ GET_KEYS_SKIP_LEFT
     DEC STACK
     LDI $0C
     STR STACK
-    OUT 2
+    OUT KEY_PORT
     BN3 GET_KEYS_SKIP_RIGHT
     STR R_VAR_PTR
 GET_KEYS_SKIP_RIGHT
@@ -38,7 +54,7 @@ GET_KEYS_SKIP_RIGHT
     DEC STACK
     LDI $0A
     STR STACK
-    OUT 2
+    OUT KEY_PORT
     BN3 GET_KEYS_SKIP_DOWN
     STR R_VAR_PTR
 GET_KEYS_SKIP_DOWN
@@ -46,16 +62,78 @@ GET_KEYS_SKIP_DOWN
     DEC STACK
     LDI $00
     STR STACK
-    OUT 2
+    OUT KEY_PORT
     BN3 GET_KEYS_SKIP_UP
     LDI $10
     STR R_VAR_PTR
 GET_KEYS_SKIP_UP
+    .fi
+
+    .do TARGET=TARGET_ELF
+    BN3 GET_KEYS_EXIT
+    SEX STACK
+    INP KEY_PORT
+    ANI $0F
+    STR STACK
+
+GET_KEYS_LEFT
+    BZ GET_KEYS_LEFT_1
+    SMI $04
+    BZ GET_KEYS_LEFT_1
+    SMI $04
+    BZ GET_KEYS_LEFT_1
+    BR GET_KEYS_RIGHT
+GET_KEYS_LEFT_1
+    LDI $01
+    STR R_VAR_PTR
+GET_KEYS_RIGHT
+    INC R_VAR_PTR
+    LDN STACK
+    SMI $02
+    BZ GET_KEYS_RIGHT_1
+    SMI $04
+    BZ GET_KEYS_RIGHT_1
+    SMI $04
+    BZ GET_KEYS_RIGHT_1
+    BR GET_KEYS_DOWN
+GET_KEYS_RIGHT_1
+    LDI $01
+    STR R_VAR_PTR
+GET_KEYS_DOWN
+    INC R_VAR_PTR
+    LDN STACK
+    BZ GET_KEYS_DOWN_1
+    SMI $01
+    BZ GET_KEYS_DOWN_1
+    SMI $01
+    BZ GET_KEYS_DOWN_1
+    BR GET_KEYS_UP
+GET_KEYS_DOWN_1
+    LDI $01
+    STR R_VAR_PTR
+GET_KEYS_UP
+    INC R_VAR_PTR
+    LDN STACK
+    SMI $08
+    BZ GET_KEYS_UP_1
+    SMI $01
+    BZ GET_KEYS_UP_1
+    SMI $01
+    BZ GET_KEYS_UP_1
+    BR GET_KEYS_EXIT
+GET_KEYS_UP_1
+    LDI $01
+    STR R_VAR_PTR
+
+    .fi
+
+GET_KEYS_EXIT
     SEP PC_MAIN
 
 
 ; wait for any key to be pressed
 WAIT_ANY_KEY
+    .do TARGET=TARGET_VIP
     SEX STACK
     DEC STACK
     LDI $00
@@ -67,5 +145,10 @@ WAIT_ANY_KEY_LOOP
     ADI $01
     ANI $0F
     BR WAIT_ANY_KEY_LOOP
+    .fi
+    .do TARGET=TARGET_ELF
+WAIT_ANY_KEY_LOOP
+    BN3 WAIT_ANY_KEY_LOOP
+    .fi
 WAIT_ANY_KEY_EXIT
     SEP PC_MAIN
